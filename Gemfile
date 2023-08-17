@@ -8,3 +8,5 @@ gem 'sorbet', group: :development
 gem 'sorbet-runtime'
 gem 'spoom', group: :development
 gem 'tapioca', require: false, group: :development
+
+gem 'minitest-reporters', group: :test
