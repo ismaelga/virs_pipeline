@@ -28,28 +28,40 @@ describe Ingestion do
         Inspection.new(2811, Date.parse("2020-02-06"), 1920, "Economotor", 102, false)
       )
     end
+
+    it "parses quotes correctly" do
+      parsed = @ingestor.parse_file("test/samples/vir_202006.csv")[-1]
+
+      _(parsed.org_name).must_equal('Cars "R" Us')
+    end
   end
 
   describe "ingest_updates" do
-    it "returns parsed data in order" do
-      results = @ingestor.ingest_updates.map do |i|
-        [i.vehicle_id, i.inspection_passed]
-      end
+    it "returns organizations with last updated names" do
+      res = @ingestor.ingest_updates
 
-      _(results)
+      _(res[0][0])
+        .must_equal(
+          {1920=>"Economotor", 7732=>"Mina Fleet Trucks", 2265=>"Cars \"R\" Us"}
+        )
+
+      _(res[1][0])
+        .must_equal(
+          {1920=>"Economotor2", 7732=>"Mina Fleet Trucks", 2265=>"Cars \"R\" Us 2"}
+        )
+    end
+
+    it "returns vehicles with last updated states" do
+      res = @ingestor.ingest_updates
+
+      _(res[1][1].map {|id, i| [id, i.vehicle_id, i.inspection_date.to_s, i.vehicle_org_id, i.inspection_period_id, i.inspection_passed]})
         .must_equal(
           [
-            # first file
-            [2811, false],
-            [4021, true],
-            [1508, true],
-            [4919, false],
-
-            # second file
-            [2811, true],
-            [4021, true],
-            [1508, true],
-            [4919, true],
+            [2811, 2811, "2020-02-06", 1920, 102, true],
+            [4021, 4021, "2020-02-10", 1920, 102, true],
+            [1508, 1508, "2020-02-12", 7732, 102, true],
+            [1509, 1509, "2020-02-12", 7732, 102, nil],
+            [4919, 4919, "2020-02-14", 2265, 102, true]
           ]
         )
     end

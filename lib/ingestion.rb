@@ -1,6 +1,14 @@
 require "csv"
 require "date"
-require "inspection"
+
+Inspection = Struct.new(
+  :vehicle_id,
+  :inspection_date,
+  :vehicle_org_id,
+  :org_name,
+  :inspection_period_id,
+  :inspection_passed) do
+end
 
 # vehicle_id|inspection_date|vehicle_org_id|org_name|inspection_period_id|inspection_passed
 # 2811|2020-02-06|1920|Economotor|102|TRUE
@@ -25,10 +33,25 @@ class Ingestion
     ]
   end
 
-  def ingest_updates(_last_update = nil)
-    all_files.map do |file|
-      parse_file(file)
-    end.flatten
+  def ingest_updates()
+    all_files
+      .map do |file|
+      entries = parse_file(file)
+
+      entries_to_changes(entries)
+    end
+  end
+
+  def entries_to_changes(entries)
+    orgs = {}
+    vehicles = {}
+
+    entries.each do |entry|
+      orgs[entry.vehicle_org_id] = entry.org_name
+      vehicles[entry.vehicle_id] = entry
+    end
+
+    [orgs, vehicles]
   end
 
   def all_files
@@ -43,14 +66,17 @@ class Ingestion
 
     results = []
     CSV.foreach(file, headers: :first_row, return_headers: false, col_sep: "|") do |row|
-      results << Inspection.new(
-        row["vehicle_id"].to_i,
-        Date.parse(row["inspection_date"]),
-        row["vehicle_org_id"].to_i,
-        row["org_name"],
-        row["inspection_period_id"].to_i,
-        row["inspection_passed"] == "TRUE"
-      )
+      passed = row["inspection_passed"].nil? ? nil : row["inspection_passed"] == "TRUE"
+
+      results <<
+        Inspection.new(
+          row["vehicle_id"].to_i,
+          Date.parse(row["inspection_date"]),
+          row["vehicle_org_id"].to_i,
+          row["org_name"],
+          row["inspection_period_id"].to_i,
+          passed
+        )
     end
 
     results
