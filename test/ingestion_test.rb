@@ -31,10 +31,27 @@ describe Ingestion do
   end
 
   describe "ingest_updates" do
-    it "returns parsed data" do
-      # _(@ingestor.ingest_updates).must_equal(
-      #   []
-      # )
+    it "returns parsed data in order" do
+      results = @ingestor.ingest_updates.map do |i|
+        [i.vehicle_id, i.inspection_passed]
+      end
+
+      _(results)
+        .must_equal(
+          [
+            # first file
+            [2811, false],
+            [4021, true],
+            [1508, true],
+            [4919, false],
+
+            # second file
+            [2811, true],
+            [4021, true],
+            [1508, true],
+            [4919, true],
+          ]
+        )
     end
   end
 end

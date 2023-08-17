@@ -26,9 +26,9 @@ class Ingestion
   end
 
   def ingest_updates(_last_update = nil)
-    all_files.each do |file|
+    all_files.map do |file|
       parse_file(file)
-    end
+    end.flatten
   end
 
   def all_files
