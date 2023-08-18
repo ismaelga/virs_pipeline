@@ -58,6 +58,43 @@ class SqliteStore
     parse_inspection(r)
   end
 
+  def report()
+    orgs = org_with_most_fails()
+    puts orgs.inspect
+    names = {}
+    orgs.each {|o| names[o["id"]] = o["name"]}
+    puts ["names", names].inspect
+    org_ids = orgs.map {|o| o["id"]}
+    puts org_ids.inspect
+    r = db.query(
+      "
+      SELECT organization_id,
+      COUNT(IIF(inspection_passed = NULL, NULL, 1)) as tot_v,
+      COUNT(IIF(inspection_passed = 0, 1, NULL)) as failed_v
+      FROM vehicle_inspections
+      WHERE organization_id IN (#{org_ids.join(',')})
+      GROUP BY organization_id
+      ").to_a
+    puts r.inspect
+    r.each do |l|
+      l["name"] = names[l["organization_id"]]
+    end
+    r
+  end
+
+  def org_with_most_fails()
+    db.query(
+      "
+      SELECT o.id, o.name 
+      FROM vehicle_inspections v
+      JOIN organizations o ON o.id = v.organization_id
+      WHERE inspection_passed = 0
+      GROUP BY organization_id
+      ORDER BY count(vehicle_id) DESC
+      LIMIT 3
+      ").to_a
+  end
+
   def parse_inspection(r)
     r["inspection_passed"] = r["inspection_passed"].nil? ? nil : !!r["inspection_passed"]
     r

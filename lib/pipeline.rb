@@ -48,11 +48,12 @@ class Pipeline
     export(file, report)
   end
 
-  def export(file)
+  def export(file, report)
     headers = []
-    CSV.open(file, headers:, separator: "\t") do |tsv|
-      report.each do |line|
-        tsv << line
+    CSV.open(file, "wb", headers: ["org_name", "tot_v", "failed_v"], write_headers: true, col_sep: "\t") do |tsv|
+      report.each do |l|
+        puts l.inspect
+        tsv << [l["name"], l["tot_v"], l["failed_v"]]
       end
     end
   end
