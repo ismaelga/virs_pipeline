@@ -60,12 +60,9 @@ class SqliteStore
 
   def report()
     orgs = org_with_most_fails()
-    puts orgs.inspect
     names = {}
     orgs.each {|o| names[o["id"]] = o["name"]}
-    puts ["names", names].inspect
     org_ids = orgs.map {|o| o["id"]}
-    puts org_ids.inspect
     r = db.query(
       "
       SELECT organization_id,
@@ -75,7 +72,6 @@ class SqliteStore
       WHERE organization_id IN (#{org_ids.join(',')})
       GROUP BY organization_id
       ").to_a
-    puts r.inspect
     r.each do |l|
       l["name"] = names[l["organization_id"]]
     end
